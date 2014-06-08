@@ -67,20 +67,12 @@ end
 
 FactoryGirl.register_strategy(:remote, FactoryGirl::RemoteStrategy)
 
-module RemoteStrategySearchHelper
-  ##
-  # Helper method for register search url with provided params and serialized collection as response.
-  #
-  def remote_search(*args)
-    params = args.extract_options!
-    collection = args.flatten
-    FakeWeb.register_uri(:get, "#{FactoryGirl::RemoteStrategy.collection_url(collection)}?#{params.to_query}",
-      body: collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json)
-  end
+##
+# Helper method for register search url with provided params and serialized collection as response.
+#
+def remote_search(*args)
+  params = args.extract_options!
+  collection = args.flatten
+  FakeWeb.register_uri(:get, "#{FactoryGirl::RemoteStrategy.collection_url(collection)}?#{params.to_query}",
+    body: collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json)
 end
-
-module FactoryGirl::Syntax::Methods
-  include RemoteStrategySearchHelper
-end
-
-FactoryGirl.extend RemoteStrategySearchHelper
