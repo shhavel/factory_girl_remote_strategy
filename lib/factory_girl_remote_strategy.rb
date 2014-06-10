@@ -59,7 +59,7 @@ module FactoryGirl
       end
 
       def collection_url(collection)
-        collection.first.class.instance_eval { "#{site}#{prefix}#{collection_name}.json" }
+        (collection.first.is_a?(Class) ? collection.first : collection.first.class).instance_eval { "#{site}#{prefix}#{collection_name}.json" }
       end
     end
   end
@@ -74,5 +74,5 @@ def remote_search(*args)
   params = args.extract_options!
   collection = args.flatten
   FakeWeb.register_uri(:get, "#{FactoryGirl::RemoteStrategy.collection_url(collection)}?#{params.to_query}",
-    body: collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json)
+    body: (collection.first.is_a?(Class) ? "[]" : collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json))
 end

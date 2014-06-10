@@ -63,5 +63,12 @@ describe FactoryGirl::RemoteStrategy do
       memberships.should be_kind_of Array
       memberships.first.should be_kind_of Membership
     end
+
+    it "registers search url of empty collection if provided model class (no first element)" do
+      remote_search Membership, search: { premises_id_in: [4] }
+      expect { Membership.find(:all, params: { search: { premises_id_in: [4] } }) }.not_to raise_error
+      memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } })
+      memberships.should eq []
+    end
   end
 end
