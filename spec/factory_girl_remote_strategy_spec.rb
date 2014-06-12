@@ -59,7 +59,7 @@ describe FactoryGirl::RemoteStrategy do
     it "registers search url with FakeWeb" do
       remote_search FactoryGirl.remote_list(:membership, 2), search: { premises_id_in: [4] }
       expect { Membership.find(:all, params: { search: { premises_id_in: [4] } }) }.not_to raise_error
-      memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } })
+      memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } }).to_a
       memberships.should be_kind_of Array
       memberships.first.should be_kind_of Membership
     end
@@ -67,7 +67,7 @@ describe FactoryGirl::RemoteStrategy do
     it "registers search url of empty collection if provided model class (no first element)" do
       remote_search Membership, search: { premises_id_in: [4] }
       expect { Membership.find(:all, params: { search: { premises_id_in: [4] } }) }.not_to raise_error
-      memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } })
+      memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } }).to_a
       memberships.should eq []
     end
   end
