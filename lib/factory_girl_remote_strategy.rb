@@ -24,6 +24,8 @@ module FactoryGirl
     def result(evaluation)
       @strategy.result(evaluation).tap do |e|
         FakeWeb.register_uri(:get, self.class.entity_url(e), body: self.class.entity_hash(e).to_json)
+        remote_search(e, search: { :"#{e.class.primary_key}_eq" => e.public_send(e.class.primary_key) })
+        remote_search(e, search: { :"#{e.class.primary_key}_in" => [e.public_send(e.class.primary_key)] })
         evaluation.notify(:after_remote, e) # runs after(:remote) callback
       end
     end
@@ -51,7 +53,7 @@ module FactoryGirl
             attributes[k] = v.map { |e| entity_hash(e) }
           end
         end
-        { entity.class.element_name => attributes, _metadata: { abilities: %w(update destroy) } }      
+        { entity.class.element_name => attributes, _metadata: { abilities: %w(update destroy) } }
       end
 
       def entity_url(entity)

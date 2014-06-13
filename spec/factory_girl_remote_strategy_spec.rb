@@ -71,4 +71,48 @@ describe FactoryGirl::RemoteStrategy do
       memberships.should eq []
     end
   end
+
+  describe "Search by primary_key" do
+    context "primary_key is id" do
+      let!(:user) { remote(:user, id: 4) }
+
+      it "registers search url for equality <primary_key>_eq = <value>" do
+        expect { User.find(:first, params: { search: { id_eq: 4 } }) }.not_to raise_error
+        user = User.find(:first, params: { search: { id_eq: 4 } })
+        user.id.should == 4
+      end
+
+      it "registers search url for inclusion <primary_key>_in [<value>]" do
+        expect { User.find(:first, params: { search: { id_in: [4] } }) }.not_to raise_error
+        user = User.find(:first, params: { search: { id_in: [4] } })
+        user.id.should == 4
+      end
+    end
+
+    context "custom primary_key" do
+      let!(:postcode) { remote(:postcode, code: 'ABCD') }
+
+      it "registers search url for equality <primary_key>_eq = <value>" do
+        expect { Postcode.find(:first, params: { search: { code_eq: 'ABCD' } }) }.not_to raise_error
+        postcode = Postcode.find(:first, params: { search: { code_eq: 'ABCD' } })
+        postcode.code.should == 'ABCD'
+      end
+
+      it "registers search url for inclusion <primary_key>_in [<value>]" do
+        expect { Postcode.find(:first, params: { search: { code_in: ['ABCD'] } }) }.not_to raise_error
+        postcode = Postcode.find(:first, params: { search: { code_in: ['ABCD'] } })
+        postcode.code.should == 'ABCD'
+      end
+    end
+  end
+
+  context "custom primary_key" do
+    it "builds instance and registers get url with FakeWeb" do
+      FactoryGirl.remote(:postcode, code: 'FGH')
+      expect { Postcode.find('FGH') }.not_to raise_error
+      postcode = Postcode.find('FGH')
+      postcode.should be_kind_of Postcode
+      postcode.code.should == 'FGH'
+    end
+  end
 end
