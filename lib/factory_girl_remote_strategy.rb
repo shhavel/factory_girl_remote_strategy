@@ -24,6 +24,7 @@ module FactoryGirl
     def result(evaluation)
       @strategy.result(evaluation).tap do |e|
         FakeWeb.register_uri(:get, self.class.entity_url(e), body: self.class.entity_hash(e).to_json)
+        FakeWeb.register_uri(:put, self.class.entity_url(e), body: self.class.entity_hash(e).to_json)
         remote_search(e, search: { :"#{e.class.primary_key}_eq" => e.public_send(e.class.primary_key) })
         remote_search(e, search: { :"#{e.class.primary_key}_in" => [e.public_send(e.class.primary_key)] })
         evaluation.notify(:after_remote, e) # runs after(:remote) callback
