@@ -61,14 +61,27 @@ module FactoryGirl
         "#{entity.class.site}#{entity.class.prefix}#{entity.class.collection_name}/#{entity.id}.json"
       end
 
-      def collection_url(collection)
-        (collection.first.is_a?(Class) ? collection.first : collection.first.class).instance_eval { "#{site}#{prefix}#{collection_name}.json" }
+      def collection_url(collection, params = {})
+        (collection.first.is_a?(Class) ? collection.first : collection.first.class).instance_eval { "#{site}#{prefix}#{collection_name}.json#{'?' if params.any?}#{params.to_query}" }
+      end
+    end
+  end
+
+  class RemoteNotFoundStrategy < RemoteStrategy
+    def result(evaluation)
+      @strategy.result(evaluation).tap do |e|
+        body = { errors: [{ code: 'resource_not_found',
+          message: "Couldn't find #{e.class} with #{e.class.primary_key}=#{e.public_send(e.class.primary_key)}" } ] }.to_json
+        FakeWeb.register_uri(:get, self.class.entity_url(e), body: body, status: 404)
+        remote_search(e.class, search: { :"#{e.class.primary_key}_eq" => e.public_send(e.class.primary_key) }) # empty search
+        remote_search(e.class, search: { :"#{e.class.primary_key}_in" => [e.public_send(e.class.primary_key)] }) # empty search
       end
     end
   end
 end
 
 FactoryGirl.register_strategy(:remote, FactoryGirl::RemoteStrategy)
+FactoryGirl.register_strategy(:remote_not_found, FactoryGirl::RemoteNotFoundStrategy)
 
 ##
 # Helper method for register search url with provided params and serialized collection as response.
@@ -76,6 +89,6 @@ FactoryGirl.register_strategy(:remote, FactoryGirl::RemoteStrategy)
 def remote_search(*args)
   params = args.extract_options!
   collection = args.flatten
-  FakeWeb.register_uri(:get, "#{FactoryGirl::RemoteStrategy.collection_url(collection)}?#{params.to_query}",
+  FakeWeb.register_uri(:get, FactoryGirl::RemoteStrategy.collection_url(collection, params),
     body: (collection.first.is_a?(Class) ? "[]" : collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json))
 end
