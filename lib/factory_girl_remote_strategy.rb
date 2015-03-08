@@ -32,7 +32,7 @@ module FactoryGirl
     end
 
     class << self
-      def entity_hash(entity)
+      def entity_hash(entity, params = {})
         raise ArgumentError, "cann't construct hash for non ActiveResource::Base object" unless entity.is_a?(ActiveResource::Base)
         attributes = entity.attributes
         # Set belongs_to <association>_id instead of each <association>.
@@ -54,7 +54,9 @@ module FactoryGirl
             attributes[k] = v.map { |e| entity_hash(e) }
           end
         end
-        { entity.class.element_name => attributes, _metadata: { abilities: %w(update destroy) } }
+        { entity.class.element_name => attributes }.tap do |h|
+          h[:_metadata] = { abilities: %w(update destroy) } unless params[:metadata] == false
+        end
       end
 
       def entity_url(entity)
@@ -90,5 +92,5 @@ def remote_search(*args)
   params = args.extract_options!
   collection = args.flatten
   FakeWeb.register_uri(:get, FactoryGirl::RemoteStrategy.collection_url(collection, params),
-    body: (collection.first.is_a?(Class) ? "[]" : collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e) }.to_json))
+    body: (collection.first.is_a?(Class) ? "[]" : collection.map { |e| FactoryGirl::RemoteStrategy.entity_hash(e, params) }.to_json))
 end

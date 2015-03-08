@@ -70,6 +70,17 @@ describe FactoryGirl::RemoteStrategy do
       memberships = Membership.find(:all, params: { search: { premises_id_in: [4] } }).to_a
       memberships.should eq []
     end
+
+    context "standard ActiveResource JSON formatter with included root" do
+      it "performs correct search if no metadata required" do
+        remote_search FactoryGirl.remote_list(:staff, 2), metadata: false
+        expect { Staff.find(:all, params: { metadata: false }) }.not_to raise_error
+        staff = Staff.find(:all, params: { metadata: false }).to_a
+        expect(staff).to be_kind_of Array
+        expect(staff.first).to be_kind_of Staff
+        expect(staff.first.group_id).to eq 18
+      end
+    end
   end
 
   describe "Search by primary_key" do
